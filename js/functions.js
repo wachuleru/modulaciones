@@ -70,7 +70,7 @@ function generarModulaciones(from, to) {
       { nombre: 'Cadencia Ascendente', progresion: [from, `${from}maj7`, `${dom}7`, to] },
       { nombre: 'Progresión de Subdominante', progresion: [from, `${from}m`, `${to}m`, `${dom}7`, to] },
       { nombre: 'Modulación Diatónica', progresion: [from, `${from}maj7`, `${dom}7`, `${to}maj7`, to] },
-      { nombre: 'Modulación por Acorde Disminuido', progresion: [`${from}`,`${from}#dim`,`${dominante(to)}7`,`${to}m`,`${to}`] }
+      { nombre: 'Modulación por Acorde Disminuido', progresion: [`${from}`,`${from}#dim`,`${dominante(to)}7`,`${to}m`,`${to}`] },
       { nombre: 'Acordes en Común', progresion: [from, relMenorFrom, relMenorTo, to] },
       { nombre: 'Sustitución Tritonal', progresion: [from, `${tritonal}7`, `${dom}7`, to] },
       { nombre: 'Acorde Disminuido Completo', progresion: [from, dimCompleto, `${dom}7`, to] }
