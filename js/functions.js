@@ -1,13 +1,13 @@
 let tonalidades = [];
 
-// Función para obtener el acorde dominante de una tonalidad
 function dominante(tonalidad) {
   const dominantes = {
-    'C': 'G', 'G': 'D', 'D': 'A', 'A': 'E', 'E': 'B', 'B': 'Gb',
-    'F': 'C', 'Bb': 'F', 'Eb': 'Bb', 'Ab': 'Eb', 'Db': 'Ab', 'Gb': 'Db'
+      C: 'G', G: 'D', D: 'A', A: 'E', E: 'B', B: 'Gb',
+      F: 'C', Bb: 'F', Eb: 'Bb', Ab: 'Eb', Db: 'Ab', Gb: 'Db'
   };
-  return dominantes[tonalidad];
+  return dominantes[tonalidad] || null;
 }
+
 function relativoMenor(tonalidad) {
   const relativos = {
       C: 'Am', G: 'Em', D: 'Bm', A: 'F#m', E: 'C#m', B: 'G#m',
@@ -31,7 +31,8 @@ function acordeDisminuido(tonalidad) {
   };
   return disminuidos[tonalidad] || null;
 }
-function calcularAfinidad(progresion,name) {
+
+function calcularAfinidad(progresion) {
   const notasPorAcorde = {
       C: ['C', 'E', 'G'], G: ['G', 'B', 'D'], D: ['D', 'F#', 'A'], A: ['A', 'C#', 'E'],
       E: ['E', 'G#', 'B'], B: ['B', 'D#', 'F#'], F: ['F', 'A', 'C'], Bb: ['Bb', 'D', 'F'],
@@ -39,8 +40,9 @@ function calcularAfinidad(progresion,name) {
       'F#dim': ['F#', 'A', 'C'], 'Bdim': ['B', 'D', 'F'], 'C#dim': ['C#', 'E', 'G'],
       'G#dim': ['G#', 'B', 'D'], 'D#dim': ['D#', 'F#', 'A'], 'A#dim': ['A#', 'C#', 'E']
   };
-  console.log('calcularAfinidad progresion',name,progresion)
-  let totalNotasCompartidas = 0;
+
+    console.log(progresion)
+    let totalNotasCompartidas = 0;
   for (let i = 0; i < progresion.length - 1; i++) {
     console.log(progresion[i + 1])
       const acordeActual = progresion[i].replace(/7|m|dim|maj7|#/, '');
@@ -53,7 +55,77 @@ function calcularAfinidad(progresion,name) {
   return totalNotasCompartidas;
 }
 
+function generarGrafo() {
+  const acordes = ['C', 'G', 'D', 'A', 'E', 'B', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'];
+  const grafo = {};
+
+  for (const acorde of acordes) {
+      grafo[acorde] = [
+          dominante(acorde),
+          relativoMenor(acorde),
+          tritono(acorde),
+          acordeDisminuido(acorde)
+      ].filter(Boolean);
+  }
+
+  return grafo;
+}
+
+function buscarCaminos(grafo, inicio, fin, path = [], caminos = []) {
+  path = [...path, inicio];
+
+  if (inicio === fin) {
+      caminos.push(path);
+  } else if (grafo[inicio]) {
+      for (const vecino of grafo[inicio]) {
+          if (!path.includes(vecino)) {
+              buscarCaminos(grafo, vecino, fin, path, caminos);
+          }
+      }
+  }
+
+  return caminos;
+}
+
 function generarModulaciones(from, to) {
+  const grafo = generarGrafo();
+  const caminos = buscarCaminos(grafo, from, to);
+  const dom = dominante(to);
+  const relMenorFrom = relativoMenor(from);
+  const relMenorTo = relativoMenor(to);
+  const tritonal = tritono(dom);
+  const dimCompleto = acordeDisminuido(from);
+  const modulaciones = [
+    { nombre: 'Dominante Secundaria', progresion: [from, `${dom}7`, to] },
+    { nombre: 'Cadencia Perfecta Extendida', progresion: [from, `${from}7`, dom, to] },
+    { nombre: 'Cadencia Plagal', progresion: [from, `${from}m`, `${to}m`, to] },
+    { nombre: 'Intercambio Modal', progresion: [from, `${from}m`, `${dom}7`, to] },
+    { nombre: 'Cadencia por Cromatismo', progresion: [from, `${from}#dim`, `${dom}7`, to] },
+    { nombre: 'Círculo de Quintas', progresion: [from, dominante(from), dominante(dom), to] },
+    { nombre: 'Cadencia Ascendente', progresion: [from, `${from}maj7`, `${dom}7`, to] },
+    { nombre: 'Progresión de Subdominante', progresion: [from, `${from}m`, `${to}m`, `${dom}7`, to] },
+    { nombre: 'Modulación Diatónica', progresion: [from, `${from}maj7`, `${dom}7`, `${to}maj7`, to] },
+    { nombre: 'Modulación por Acorde Disminuido', progresion: [`${from}`,`${from}#dim`,`${dominante(to)}7`,`${to}m`,`${to}`] },
+    { nombre: 'Acordes en Común', progresion: [from, relMenorFrom, relMenorTo, to] },
+    { nombre: 'Sustitución Tritonal', progresion: [from, `${tritonal}7`, `${dom}7`, to] },
+    { nombre: 'Acorde Disminuido Completo', progresion: [from, dimCompleto, `${dom}7`, to] }
+];
+modulaciones.forEach(m=>{
+  m.afinidad= calcularAfinidad(m.progresion)
+})
+console.log(caminos) 
+  let retorno = caminos.map((progresion,i) => ({
+      nombre: 'Modulación Dinámica '+i,
+      progresion,
+      afinidad: calcularAfinidad(progresion)
+      
+  })).sort((a, b) => b.afinidad - a.afinidad);
+  console.log('caminos',caminos)
+  retorno.push(...modulaciones)
+  return retorno.sort((a, b) => b.afinidad - a.afinidad);
+}
+
+/* function generarModulaciones(from, to) {
   const dom = dominante(to);
   const relMenorFrom = relativoMenor(from);
   const relMenorTo = relativoMenor(to);
@@ -82,8 +154,7 @@ function generarModulaciones(from, to) {
       ...mod,
       afinidad: calcularAfinidad(mod.progresion,mod.nombre)
   }));
-}
-
+} */
 
 function listaTonalidades(){
   const tono=['A','Bb','B','C','Db','D','Eb','E','F','Gb','G','Ab'];
@@ -101,19 +172,33 @@ function buscar(){
   let e1 = document.getElementById("to");
   let to = e1.value;
   let modulaciones = generarModulaciones(from,to);
-  console.log(modulaciones);
+  console.log('buscar mod',modulaciones);
   let mods=`<div class="accordion" id="accordionExample">`;
+  index=0;
   modulaciones.forEach(m =>{
+    m.div='chords_'+index;
+    m.chords='';
     let prog='';
     let acordes=``
+    const setAcordes = new Set();
+    console.log(m)
     m.progresion.forEach(p=>{
       prog+=prog.length?' → '+p:p;
+      //m.chords+=m.chords.length?' → '+p:p;
+      setAcordes.add(p);
+      //m.chords+=m.chords.length?' '+p:p;
       
-      acordes+=`<div class="acordes">
+      /*acordes+=`<div class="acordes">
           <ins class="scales_chords_api" chord="${p}"  output="sound"></ins>
         </div>
-      `
+      `*/
+      
     })
+    setAcordes.forEach(p=>{
+      m.chords+=m.chords.length?' '+p:p
+    }
+    )
+    acordes+=`<div id=${m.div}></div>`
     let max = (m.progresion.length-1)*3;
     console.log('cant acordes',m.progresion.length)
     console.log('afinindad',m.afinidad)
@@ -131,7 +216,7 @@ function buscar(){
     for (let index = 0; index < noStar; index++) {
       iconStar+=`<i class="bi bi-star"></i>` 
     }
-    console.log(iconStar);
+    //console.log(iconStar);
     m.stars=iconStar;
     mods+=`<div class="accordion-item">
     <h2 class="accordion-header">
@@ -141,10 +226,11 @@ function buscar(){
     </h2>
     <div id="${m.nombre.replaceAll(' ','_')}" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
       <div class="accordion-body">
-      ${acordes} 
+        <div id='${m.div}'></div> 
       </div>
     </div>
   </div>`
+  index++;
   })
   mods+=`</div>`;
   //console.log(mods);
@@ -152,46 +238,10 @@ function buscar(){
   console.log(modulaciones)
   modulaciones.forEach(m=>{
     document.getElementById('stars_'+m.nombre.replaceAll(' ','_')).innerHTML=m.stars
+    jtab.render($('#'+m.div),m.chords);
   })
   
-  /*`<div class="accordion" id="accordionExample">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-        Accordion Item #1
-      </button>
-    </h2>
-    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the first item's accordion body.</strong> It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-        Accordion Item #2
-      </button>
-    </h2>
-    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-        Accordion Item #3
-      </button>
-    </h2>
-    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
-    </div>
-  </div>
-</div>`*/
+  
 }
 
 function cargar(){
