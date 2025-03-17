@@ -87,6 +87,22 @@ function buscarCaminos(grafo, inicio, fin, path = [], caminos = []) {
   return caminos;
 }
 
+function acordesEnComun(from, to) {
+  const notasPorAcorde = {
+      C: ['C', 'E', 'G'], G: ['G', 'B', 'D'], D: ['D', 'F#', 'A'], A: ['A', 'C#', 'E'],
+      E: ['E', 'G#', 'B'], B: ['B', 'D#', 'F#'], F: ['F', 'A', 'C'], Bb: ['Bb', 'D', 'F'],
+      Eb: ['Eb', 'G', 'Bb'], Ab: ['Ab', 'C', 'Eb'], Db: ['Db', 'F', 'Ab'], Gb: ['Gb', 'Bb', 'Db']
+  };
+  const acordes = Object.keys(notasPorAcorde);
+  const notasFrom = notasPorAcorde[from] || [];
+  const notasTo = notasPorAcorde[to] || [];
+  const comunes = acordes.filter(acorde => {
+      const notasAcorde = notasPorAcorde[acorde] || [];
+      return notasFrom.some(nota => notasAcorde.includes(nota)) && notasTo.some(nota => notasAcorde.includes(nota));
+  });
+  return [from, ...comunes, to];
+}
+
 function generarModulaciones(from, to) {
   const grafo = generarGrafo();
   const caminos = buscarCaminos(grafo, from, to);
@@ -106,7 +122,7 @@ function generarModulaciones(from, to) {
     { nombre: 'Progresión de Subdominante', progresion: [from, `${from}m`, `${to}m`, `${dom}7`, to] },
     { nombre: 'Modulación Diatónica', progresion: [from, `${from}maj7`, `${dom}7`, `${to}maj7`, to] },
     { nombre: 'Modulación por Acorde Disminuido', progresion: [`${from}`,`${from}#dim`,`${dominante(to)}7`,`${to}m`,`${to}`] },
-    { nombre: 'Acordes en Común', progresion: [from, relMenorFrom, relMenorTo, to] },
+    { nombre: 'Acordes en Común', progresion: acordesEnComun(from, to) },
     { nombre: 'Sustitución Tritonal', progresion: [from, `${tritonal}7`, `${dom}7`, to] },
     { nombre: 'Acorde Disminuido Completo', progresion: [from, dimCompleto, `${dom}7`, to] }
 ];
@@ -120,9 +136,9 @@ console.log(caminos)
       afinidad: calcularAfinidad(progresion)
       
   })).sort((a, b) => b.afinidad - a.afinidad);
-  console.log('caminos',caminos)
+  console.log('caminos',retorno)
   retorno.push(...modulaciones)
-  return retorno.sort((a, b) => b.afinidad - a.afinidad);
+  return retorno.sort((a, b) => ((b.afinidad*10)/(b.progresion.length-1)) - ((a.afinidad*10)/(a.progresion.length-1)));
 }
 
 /* function generarModulaciones(from, to) {
@@ -175,6 +191,7 @@ function buscar(){
   console.log('buscar mod',modulaciones);
   let mods=`<div class="accordion" id="accordionExample">`;
   index=0;
+  modulaciones=modulaciones.sort((a,b)=> b.nota - a.nota)
   modulaciones.forEach(m =>{
     m.div='chords_'+index;
     m.chords='';
@@ -207,6 +224,7 @@ function buscar(){
     let starI= stars % 2==0?0:1;
     let noStar= 5-starC-starI;
     let iconStar=``;
+    m.nota=stars;
     for (let index = 0; index < starC; index++) {
       iconStar+=`<i class="bi bi-star-fill"></i>` 
     }
@@ -234,8 +252,10 @@ function buscar(){
   })
   mods+=`</div>`;
   //console.log(mods);
+  
   document.getElementById('listaSel').innerHTML=mods
   console.log(modulaciones)
+  
   modulaciones.forEach(m=>{
     document.getElementById('stars_'+m.nombre.replaceAll(' ','_')).innerHTML=m.stars
     jtab.render($('#'+m.div),m.chords);
