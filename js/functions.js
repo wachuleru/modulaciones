@@ -202,7 +202,7 @@ function buscar(){
     let audio=``
     m.progresion.forEach((p,i)=>{
       audio+=(`<audio  id="${m.nombre.replaceAll(' ','_')}_${i}" preload="none">
-            <source src="./sounds/${p}.mp3" type="audio/mpeg">
+            <source src="./sounds/${p.replaceAll('#','s')}.mp3" type="audio/mpeg">
             </audio>`)
       prog+=prog.length?` → `+p:p;
       //m.chords+=m.chords.length?' → '+p:p;
