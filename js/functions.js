@@ -138,7 +138,7 @@ console.log(caminos)
   })).sort((a, b) => b.afinidad - a.afinidad);
   console.log('caminos',retorno)
   retorno.push(...modulaciones)
-  return retorno.sort((a, b) => ((b.afinidad*10)/(b.progresion.length-1)) - ((a.afinidad*10)/(a.progresion.length-1)));
+  return retorno.sort((a, b) => ((b.progresion.length-1)==0?0:((b.afinidad*10)/(b.progresion.length-1))) - (a.progresion.length-1==0?0:((a.afinidad*10)/(a.progresion.length-1))));
 }
 
 /* function generarModulaciones(from, to) {
@@ -199,8 +199,12 @@ function buscar(){
     let acordes=``
     const setAcordes = new Set();
     console.log(m)
-    m.progresion.forEach(p=>{
-      prog+=prog.length?' → '+p:p;
+    let audio=``
+    m.progresion.forEach((p,i)=>{
+      audio+=(`<audio  id="${m.nombre.replaceAll(' ','_')}_${i}" preload="none">
+            <source src="./sounds/${p}.mp3" type="audio/mpeg">
+            </audio>`)
+      prog+=prog.length?` → `+p:p;
       //m.chords+=m.chords.length?' → '+p:p;
       setAcordes.add(p);
       //m.chords+=m.chords.length?' '+p:p;
@@ -211,6 +215,7 @@ function buscar(){
       `*/
       
     })
+    m.audio=audio;
     setAcordes.forEach(p=>{
       m.chords+=m.chords.length?' '+p:p
     }
@@ -219,7 +224,7 @@ function buscar(){
     let max = (m.progresion.length-1)*3;
     console.log('cant acordes',m.progresion.length)
     console.log('afinindad',m.afinidad)
-    let stars = Math.round((m.afinidad*10)/max);
+    let stars = max==0?0:Math.round((m.afinidad*10)/max);
     let starC= Math.trunc(stars/2);
     let starI= stars % 2==0?0:1;
     let noStar= 5-starC-starI;
@@ -244,7 +249,9 @@ function buscar(){
     </h2>
     <div id="${m.nombre.replaceAll(' ','_')}" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
       <div class="accordion-body">
-        <div id='${m.div}'></div> 
+        <button onclick="playMod('${m.nombre.replaceAll(' ','_')}',${m.progresion.length})"><i class="bi bi-play-circle"></i></button>
+        <div id="audios_${m.nombre.replaceAll(' ','_')}"></div>
+        <div id='${m.div}'></div>
       </div>
     </div>
   </div>`
@@ -257,13 +264,30 @@ function buscar(){
   console.log(modulaciones)
   
   modulaciones.forEach(m=>{
-    document.getElementById('stars_'+m.nombre.replaceAll(' ','_')).innerHTML=m.stars
+    document.getElementById('stars_'+m.nombre.replaceAll(' ','_')).innerHTML=m.stars;
+    document.getElementById('audios_'+m.nombre.replaceAll(' ','_')).innerHTML=m.audio;
     jtab.render($('#'+m.div),m.chords);
+    
   })
   
   
 }
-
+function sleep(ms) {
+  
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+async function playMod(nombre,cant){
+  let i=0;
+  /* let  music = document.getElementById(nombre+"_" + i);
+  music.play(); */
+  while(i<cant){
+    console.log('play',nombre,i)
+    let  music = document.getElementById(nombre+"_" + i);
+    music.play();
+    await new Promise(r => setTimeout(r, 1000));
+    i++
+  }
+}
 function cargar(){
   listaTonalidades()
 }
