@@ -111,17 +111,20 @@ function generarModulaciones(from, to) {
   const relMenorTo = relativoMenor(to);
   const tritonal = tritono(dom);
   const dimCompleto = acordeDisminuido(from);
+  const tonos=['A','Bb','B','C','Db','D','Eb','E','F','Gb','G','Ab']
+  let a =tonos.indexOf(from);
+  let sig = ((a+1) >= tonos.length)?tonos[a-(tonos.length-1)]:tonos[a+1];
   const modulaciones = [
     { nombre: 'Dominante Secundaria', progresion: [from, `${dom}7`, to] },
     { nombre: 'Cadencia Perfecta Extendida', progresion: [from, `${from}7`, dom, to] },
     { nombre: 'Cadencia Plagal', progresion: [from, `${from}m`, `${to}m`, to] },
     { nombre: 'Intercambio Modal', progresion: [from, `${from}m`, `${dom}7`, to] },
-    { nombre: 'Cadencia por Cromatismo', progresion: [from, `${from}#dim`, `${dom}7`, to] },
+    { nombre: 'Cadencia por Cromatismo', progresion: [from, `${sig}dim`, `${dom}7`, to] },
     { nombre: 'Círculo de Quintas', progresion: [from, dominante(from), dominante(dom), to] },
     { nombre: 'Cadencia Ascendente', progresion: [from, `${from}maj7`, `${dom}7`, to] },
     { nombre: 'Progresión de Subdominante', progresion: [from, `${from}m`, `${to}m`, `${dom}7`, to] },
     { nombre: 'Modulación Diatónica', progresion: [from, `${from}maj7`, `${dom}7`, `${to}maj7`, to] },
-    { nombre: 'Modulación por Acorde Disminuido', progresion: [`${from}`,`${from}#dim`,`${dominante(to)}7`,`${to}m`,`${to}`] },
+    { nombre: 'Modulación por Acorde Disminuido', progresion: [`${from}`,`${sig}dim`,`${dominante(to)}7`,`${to}m`,`${to}`] },
     { nombre: 'Acordes en Común', progresion: acordesEnComun(from, to) },
     { nombre: 'Sustitución Tritonal', progresion: [from, `${tritonal}7`, `${dom}7`, to] },
     { nombre: 'Acorde Disminuido Completo', progresion: [from, dimCompleto, `${dom}7`, to] }
